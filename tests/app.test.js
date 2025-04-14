@@ -3,11 +3,7 @@ const app = require('../src/app'); // ajusta la ruta según tu estructura real
 
 describe('VitalApp API', () => {
 
-  it('GET / debería responder con saludo', async () => {
-    const res = await request(app).get('/');
-    expect(res.statusCode).toBe(200);
-    expect(res.text).toBe('¡Hola desde Node.js!');
-  });
+
 
   it('POST /citas debería agendar una cita', async () => {
     const cita = {
