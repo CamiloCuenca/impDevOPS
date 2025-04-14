@@ -104,7 +104,7 @@
       const contenedor = document.getElementById('listaCitas');
 
       if (res.ok) {
-        contenedor.innerHTML = `
+        contenedor.innerHTML = ` 
           <table>
             <tr>
               <th>Paciente</th>
@@ -123,11 +123,55 @@
       }
     }
 
+    async function cargarResultados() {
+      const res = await fetch(`${API_URL}/resultados`);
+      const data = await res.json();
+      const contenedor = document.getElementById('listaResultados');
+
+      if (res.ok) {
+        contenedor.innerHTML = `
+          <table>
+            <tr>
+              <th>Paciente</th>
+              <th>Examen</th>
+              <th>Resultado</th>
+              <th>Fecha</th>
+            </tr>
+            ${data.resultados.map(r => `
+              <tr>
+                <td>${r.paciente}</td>
+                <td>${r.examen}</td>
+                <td>${r.resultado}</td>
+                <td>${r.fecha}</td>
+              </tr>`).join('')}
+          </table>`;
+      } else {
+        contenedor.innerHTML = `<p>${data.mensaje}</p>`;
+      }
+    }
+
+    async function cargarAlertas() {
+      const res = await fetch(`${API_URL}/alertas`);
+      const data = await res.json();
+      const contenedor = document.getElementById('listaAlertas');
+
+      if (res.ok) {
+        contenedor.innerHTML = `
+          <ul>
+            ${data.alertas.map(a => `<li><strong>${a.tipo}:</strong> ${a.mensaje} <em>(${a.fecha})</em></li>`).join('')}
+          </ul>`;
+      } else {
+        contenedor.innerHTML = `<p>${data.mensaje}</p>`;
+      }
+    }
+
     function mostrarSeccion(id) {
       document.querySelectorAll('.seccion').forEach(div => div.classList.remove('visible'));
       document.getElementById(id).classList.add('visible');
 
       if (id === 'verCitas') cargarCitas();
+      if (id === 'verResultados') cargarResultados();
+      if (id === 'verAlertas') cargarAlertas();
     }
   </script>
 </head>
