@@ -1,0 +1,40 @@
+name: CI/CD Pipeline - VitalApp
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-and-build:
+    name: Ejecutar pruebas y construir imagen
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v3
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Ejecutar pruebas con Jest
+        run: npm test
+
+      - name: Construir imagen Docker
+        run: docker build -t vitalapp .
+
+  deploy-to-render:
+    name: Desplegar en Render
+    runs-on: ubuntu-latest
+    needs: test-and-build
+
+    steps:
+      - name: Hacer deploy en Render
+        run: |
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}

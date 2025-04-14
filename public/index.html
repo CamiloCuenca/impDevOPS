@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VitalApp</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 40px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      color: #0077cc;
+    }
+    h2 {
+      color: #005a9e;
+    }
+    button {
+      background-color: #0077cc;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin: 5px 10px 10px 0;
+    }
+    button:hover {
+      background-color: #005fa3;
+    }
+    input[type="text"], input[type="date"] {
+      padding: 8px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    .seccion {
+      display: none;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    .visible {
+      display: block;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+      background-color: #fff;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #0077cc;
+      color: white;
+    }
+    ul {
+      margin-top: 10px;
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 10px;
+    }
+  </style>
+  <script>
+    const API_URL = 'http://localhost:3000';
+
+    async function agendarCita(event) {
+      event.preventDefault();
+      const citaData = {
+        nombre: document.getElementById('nombre').value,
+        fecha: document.getElementById('fecha').value,
+        motivo: document.getElementById('motivo').value
+      };
+
+      const response = await fetch(`${API_URL}/citas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(citaData)
+      });
+
+      const result = await response.json();
+      alert(response.ok ? '✅ Cita agendada con éxito' : (result.mensaje || '❌ Hubo un error'));
+    }
+
+    async function cargarResultados() {
+      const res = await fetch(`${API_URL}/resultados`);
+      const data = await res.json();
+      const contenedor = document.getElementById('listaResultados');
+
+      if (res.ok) {
+        contenedor.innerHTML = `
+          <table>
+            <tr>
+              <th>Paciente</th>
+              <th>Examen</th>
+              <th>Resultado</th>
+              <th>Fecha</th>
+            </tr>
+            ${data.resultados.map(r => `
+              <tr>
+                <td>${r.paciente}</td>
+                <td>${r.examen}</td>
+                <td>${r.resultado}</td>
+                <td>${r.fecha}</td>
+              </tr>`).join('')}
+          </table>`;
+      } else {
+        contenedor.innerHTML = `<p>${data.mensaje}</p>`;
+      }
+    }
+
+    async function cargarAlertas() {
+      const res = await fetch(`${API_URL}/alertas`);
+      const data = await res.json();
+      const contenedor = document.getElementById('listaAlertas');
+
+      if (res.ok) {
+        contenedor.innerHTML = `
+          <ul>
+            ${data.alertas.map(a => `<li><strong>${a.fecha}</strong>: ${a.mensaje}</li>`).join('')}
+          </ul>`;
+      } else {
+        contenedor.innerHTML = `<p>${data.mensaje}</p>`;
+      }
+    }
+
+    function mostrarSeccion(id) {
+      document.querySelectorAll('.seccion').forEach(div => div.classList.remove('visible'));
+      document.getElementById(id).classList.add('visible');
+
+      if (id === 'verResultados') cargarResultados();
+      if (id === 'verAlertas') cargarAlertas();
+    }
+  </script>
+</head>
+<body>
+  <h1>VitalApp</h1>
+
+  <button onclick="mostrarSeccion('agendarCita')">Agendar Cita</button>
+  <button onclick="mostrarSeccion('verResultados')">Ver Resultados Médicos</button>
+  <button onclick="mostrarSeccion('verAlertas')">Ver Alertas</button>
+
+  <div id="agendarCita" class="seccion visible">
+    <h2>Agendar Cita</h2>
+    <form onsubmit="agendarCita(event)">
+      <label>Nombre:
+        <input type="text" id="nombre" required>
+      </label>
+      <label>Fecha:
+        <input type="date" id="fecha" required>
+      </label>
+      <label>Motivo:
+        <input type="text" id="motivo" required>
+      </label>
+      <button type="submit">Agendar</button>
+    </form>
+  </div>
+
+  <div id="verResultados" class="seccion">
+    <h2>Resultados Médicos</h2>
+    <div id="listaResultados"></div>
+  </div>
+
+  <div id="verAlertas" class="seccion">
+    <h2>Alertas de Salud</h2>
+    <div id="listaAlertas"></div>
+  </div>
+</body>
+</html>
