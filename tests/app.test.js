@@ -22,10 +22,14 @@ describe('VitalApp API', () => {
     expect(res.body.cita).toMatchObject(cita);
   });
 
-  it('GET /resultados debería devolver resultados (vacío por defecto)', async () => {
+  it('GET /resultados debería devolver resultados', async () => {
     const res = await request(app).get('/resultados');
     expect(res.statusCode).toBe(200);
-    expect(res.body.resultados).toEqual([]);
+    
+    // Aquí aceptamos que haya datos de prueba y verificamos si los resultados están presentes
+    expect(res.body.resultados.length).toBeGreaterThan(0);  // Verifica que haya al menos un resultado
+    expect(res.body.resultados[0]).toHaveProperty('examen');
+    expect(res.body.resultados[0]).toHaveProperty('resultado');
   });
 
   it('POST /alertas debería registrar una alerta', async () => {
@@ -42,7 +46,7 @@ describe('VitalApp API', () => {
   it('GET /alertas debería devolver las alertas registradas', async () => {
     const res = await request(app).get('/alertas');
     expect(res.statusCode).toBe(200);
-    expect(res.body.alertas.length).toBeGreaterThan(0);
+    expect(res.body.alertas.length).toBeGreaterThan(0);  // Verifica que haya al menos una alerta
   });
 
 });
