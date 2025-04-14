@@ -98,43 +98,26 @@
       alert(response.ok ? '✅ Cita agendada con éxito' : (result.mensaje || '❌ Hubo un error'));
     }
 
-    async function cargarResultados() {
-      const res = await fetch(`${API_URL}/resultados`);
+    async function cargarCitas() {
+      const res = await fetch(`${API_URL}/citas`);
       const data = await res.json();
-      const contenedor = document.getElementById('listaResultados');
+      const contenedor = document.getElementById('listaCitas');
 
       if (res.ok) {
         contenedor.innerHTML = `
           <table>
             <tr>
               <th>Paciente</th>
-              <th>Examen</th>
-              <th>Resultado</th>
               <th>Fecha</th>
+              <th>Motivo</th>
             </tr>
-            ${data.resultados.map(r => `
+            ${data.citas.map(c => `
               <tr>
-                <td>${r.paciente}</td>
-                <td>${r.examen}</td>
-                <td>${r.resultado}</td>
-                <td>${r.fecha}</td>
+                <td>${c.nombre}</td>
+                <td>${c.fecha}</td>
+                <td>${c.motivo}</td>
               </tr>`).join('')}
           </table>`;
-      } else {
-        contenedor.innerHTML = `<p>${data.mensaje}</p>`;
-      }
-    }
-
-    async function cargarAlertas() {
-      const res = await fetch(`${API_URL}/alertas`);
-      const data = await res.json();
-      const contenedor = document.getElementById('listaAlertas');
-
-      if (res.ok) {
-        contenedor.innerHTML = `
-          <ul>
-            ${data.alertas.map(a => `<li><strong>${a.fecha}</strong>: ${a.mensaje}</li>`).join('')}
-          </ul>`;
       } else {
         contenedor.innerHTML = `<p>${data.mensaje}</p>`;
       }
@@ -144,8 +127,7 @@
       document.querySelectorAll('.seccion').forEach(div => div.classList.remove('visible'));
       document.getElementById(id).classList.add('visible');
 
-      if (id === 'verResultados') cargarResultados();
-      if (id === 'verAlertas') cargarAlertas();
+      if (id === 'verCitas') cargarCitas();
     }
   </script>
 </head>
@@ -153,6 +135,7 @@
   <h1>VitalApp</h1>
 
   <button onclick="mostrarSeccion('agendarCita')">Agendar Cita</button>
+  <button onclick="mostrarSeccion('verCitas')">Ver Citas Agendadas</button>
   <button onclick="mostrarSeccion('verResultados')">Ver Resultados Médicos</button>
   <button onclick="mostrarSeccion('verAlertas')">Ver Alertas</button>
 
@@ -170,6 +153,11 @@
       </label>
       <button type="submit">Agendar</button>
     </form>
+  </div>
+
+  <div id="verCitas" class="seccion">
+    <h2>Citas Agendadas</h2>
+    <div id="listaCitas"></div>
   </div>
 
   <div id="verResultados" class="seccion">

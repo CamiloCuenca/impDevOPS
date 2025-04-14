@@ -8,7 +8,20 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Datos en memoria (simulando un almacenamiento temporal)
-let citas = [];
+let citas = [
+  {
+    id: 1,
+    nombre: 'Camila Ríos',
+    fecha: '2025-04-15',
+    motivo: 'Chequeo general'
+  },
+  {
+    id: 2,
+    nombre: 'Carlos Gómez',
+    fecha: '2025-04-16',
+    motivo: 'Consulta de seguimiento'
+  }
+];
 let resultados = [
   {
     id: 1,
@@ -64,7 +77,15 @@ app.get('/alertas', (req, res) => {
   res.json({ alertas });
 });
 
-// 4. Endpoint para agregar alertas (solo para pruebas)
+// 4. Ver todas las citas agendadas
+app.get('/citas', (req, res) => {
+  if (citas.length === 0) {
+    return res.status(404).json({ mensaje: 'No hay citas agendadas' });
+  }
+  res.json({ citas });
+});
+
+// 5. Endpoint para agregar alertas (solo para pruebas)
 app.post('/alertas', (req, res) => {
   const alerta = { id: alertas.length + 1, ...req.body };
   alertas.push(alerta);
