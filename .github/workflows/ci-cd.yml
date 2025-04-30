@@ -1,13 +1,13 @@
-name: CI/CD Pipeline - VitalApp (Todas las ramas)
+name: CI/CD Pipeline - VitalApp (All Branches)
 
 on:
   push:
-    branches: ['**']  # Formato array válido
+    branches: ['**']  # Se ejecuta en todas las ramas
   pull_request:
-    branches: ['**']  # Formato array válido
+    branches: ['**']
 
 env:
-  IMAGE_NAME: vitalapp
+  IMAGE_NAME: vitalapp  # ¡En minúsculas!
 
 jobs:
   test-and-build:
@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run ESLint (warnings only)
+      - name: Run ESLint
         run: |
           npm run lint || echo "ESLint encontró warnings (no bloqueante)"
           npm run lint > eslint-report.txt 2>&1 || true
@@ -39,11 +39,13 @@ jobs:
           name: eslint-report-${{ github.ref_name }}
           path: eslint-report.txt
 
-      - name: Run Jest tests
+      - name: Run tests
         run: npm test
 
       - name: Build Docker image
-        run: docker build -t $IMAGE_NAME-${{ github.ref_name }} .
+        run: |
+          docker build -t $IMAGE_NAME-deploy-${{ github.ref_name }} .
+          echo "Imagen construida: $IMAGE_NAME-deploy-${{ github.ref_name }}"
 
   deploy-to-render:
     name: Deploy to Render
