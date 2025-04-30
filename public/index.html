@@ -76,102 +76,145 @@
     li {
       margin-bottom: 10px;
     }
+    .environment-indicator {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background-color: #f0f0f0;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #666;
+    }
   </style>
   <script>
-    const API_URL = 'https://impdevops.onrender.com';
+    // Detección automática del ambiente
+    function getApiUrl() {
+      const hostname = window.location.hostname;
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        // Ambiente local - usa la misma URL base
+        return '';
+      } else {
+        // Ambiente de producción - usa la URL de render.com
+        return 'https://impdevops.onrender.com';
+      }
+    }
+
+    const API_URL = getApiUrl();
+    
+    // Mostrar indicador de ambiente
+    window.onload = function() {
+      const envIndicator = document.createElement('div');
+      envIndicator.className = 'environment-indicator';
+      envIndicator.textContent = `Ambiente: ${API_URL || 'Local'}`;
+      document.body.appendChild(envIndicator);
+    };
 
     async function agendarCita(event) {
       event.preventDefault();
       const citaData = {
         nombre: document.getElementById('nombre').value,
+        cedula: document.getElementById('cedula').value,
         fecha: document.getElementById('fecha').value,
         motivo: document.getElementById('motivo').value
       };
 
-      const response = await fetch(`${API_URL}/citas`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(citaData)
-      });
+      try {
+        const response = await fetch(`${API_URL}/citas`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(citaData)
+        });
 
-      const result = await response.json();
-      alert(response.ok ? '✅ Cita agendada con éxito' : (result.mensaje || '❌ Hubo un error'));
+        const result = await response.json();
+        alert(response.ok ? '✅ Cita agendada con éxito' : (result.mensaje || '❌ Hubo un error'));
+      } catch (error) {
+        console.error("Error al agendar cita:", error);
+        alert('❌ Error al conectar con el servidor. Intente nuevamente.');
+      }
     }
 
     async function cargarCitas() {
-      const res = await fetch(`${API_URL}/citas`);
-      const data = await res.json();
-      const contenedor = document.getElementById('listaCitas');
+      const cedula = document.getElementById('consultaCedula').value;
+      if (!cedula) {
+        alert('Por favor ingrese una cédula para consultar las citas');
+        return;
+      }
 
-      if (res.ok) {
-        contenedor.innerHTML = ` 
-          <table>
-            <tr>
-              <th>Paciente</th>
-              <th>Fecha</th>
-              <th>Motivo</th>
-            </tr>
-            ${data.citas.map(c => `
+      try {
+        const res = await fetch(`${API_URL}/citas?cedula=${cedula}`);
+        const data = await res.json();
+        const contenedor = document.getElementById('listaCitas');
+
+        if (res.ok && data.citas && data.citas.length > 0) {
+          contenedor.innerHTML = ` 
+            <table>
               <tr>
-                <td>${c.nombre}</td>
-                <td>${c.fecha}</td>
-                <td>${c.motivo}</td>
-              </tr>`).join('')}
-          </table>`;
-      } else {
-        contenedor.innerHTML = `<p>${data.mensaje}</p>`;
+                <th>Paciente</th>
+                <th>Cédula</th>
+                <th>Fecha</th>
+                <th>Motivo</th>
+              </tr>
+              ${data.citas.map(c => `
+                <tr>
+                  <td>${c.nombre}</td>
+                  <td>${c.cedula}</td>
+                  <td>${c.fecha}</td>
+                  <td>${c.motivo}</td>
+                </tr>`).join('')}
+            </table>`;
+        } else {
+          contenedor.innerHTML = `<p>${data.mensaje || 'No se encontraron citas para esta cédula'}</p>`;
+        }
+      } catch (error) {
+        console.error("Error al cargar citas:", error);
+        document.getElementById('listaCitas').innerHTML = '<p>❌ Error al conectar con el servidor. Intente nuevamente.</p>';
       }
     }
 
     async function cargarResultados() {
-      const res = await fetch(`${API_URL}/resultados`);
-      const data = await res.json();
-      const contenedor = document.getElementById('listaResultados');
-
-      if (res.ok) {
-        contenedor.innerHTML = `
-          <table>
-            <tr>
-              <th>Paciente</th>
-              <th>Examen</th>
-              <th>Resultado</th>
-              <th>Fecha</th>
-            </tr>
-            ${data.resultados.map(r => `
-              <tr>
-                <td>${r.paciente}</td>
-                <td>${r.examen}</td>
-                <td>${r.resultado}</td>
-                <td>${r.fecha}</td>
-              </tr>`).join('')}
-          </table>`;
-      } else {
-        contenedor.innerHTML = `<p>${data.mensaje}</p>`;
+      const cedula = document.getElementById('consultaCedulaResultados').value;
+      if (!cedula) {
+        alert('Por favor ingrese una cédula para consultar los resultados');
+        return;
       }
-    }
 
-    async function cargarAlertas() {
-      const res = await fetch(`${API_URL}/alertas`);
-      const data = await res.json();
-      const contenedor = document.getElementById('listaAlertas');
+      try {
+        const res = await fetch(`${API_URL}/resultados?cedula=${cedula}`);
+        const data = await res.json();
+        const contenedor = document.getElementById('listaResultados');
 
-      if (res.ok) {
-        contenedor.innerHTML = `
-          <ul>
-            ${data.alertas.map(a => `<li><strong>${a.tipo}:</strong> ${a.mensaje} <em>(${a.fecha})</em></li>`).join('')}
-          </ul>`;
-      } else {
-        contenedor.innerHTML = `<p>${data.mensaje}</p>`;
+        if (res.ok && data.resultados && data.resultados.length > 0) {
+          contenedor.innerHTML = `
+            <table>
+              <tr>
+                <th>Paciente</th>
+                <th>Cédula</th>
+                <th>Examen</th>
+                <th>Resultado</th>
+                <th>Fecha</th>
+              </tr>
+              ${data.resultados.map(r => `
+                <tr>
+                  <td>${r.paciente}</td>
+                  <td>${r.cedula}</td>
+                  <td>${r.examen}</td>
+                  <td>${r.resultado}</td>
+                  <td>${r.fecha}</td>
+                </tr>`).join('')}
+            </table>`;
+        } else {
+          contenedor.innerHTML = `<p>${data.mensaje || 'No se encontraron resultados para esta cédula'}</p>`;
+        }
+      } catch (error) {
+        console.error("Error al cargar resultados:", error);
+        document.getElementById('listaResultados').innerHTML = '<p>❌ Error al conectar con el servidor. Intente nuevamente.</p>';
       }
     }
 
     function mostrarSeccion(id) {
       document.querySelectorAll('.seccion').forEach(div => div.classList.remove('visible'));
       document.getElementById(id).classList.add('visible');
-
-      if (id === 'verCitas') cargarCitas();
-      if (id === 'verResultados') cargarResultados();
-      if (id === 'verAlertas') cargarAlertas();
     }
   </script>
 </head>
@@ -181,13 +224,15 @@
   <button onclick="mostrarSeccion('agendarCita')">Agendar Cita</button>
   <button onclick="mostrarSeccion('verCitas')">Ver Citas Agendadas</button>
   <button onclick="mostrarSeccion('verResultados')">Ver Resultados Médicos</button>
-  <button onclick="mostrarSeccion('verAlertas')">Ver Alertas</button>
 
   <div id="agendarCita" class="seccion visible">
     <h2>Agendar Cita</h2>
     <form onsubmit="agendarCita(event)">
       <label>Nombre:
         <input type="text" id="nombre" required>
+      </label>
+      <label>Cédula:
+        <input type="text" id="cedula" required>
       </label>
       <label>Fecha:
         <input type="date" id="fecha" required>
@@ -201,17 +246,20 @@
 
   <div id="verCitas" class="seccion">
     <h2>Citas Agendadas</h2>
+    <label>Cédula del paciente:
+      <input type="text" id="consultaCedula" required>
+    </label>
+    <button onclick="cargarCitas()">Consultar</button>
     <div id="listaCitas"></div>
   </div>
 
   <div id="verResultados" class="seccion">
     <h2>Resultados Médicos</h2>
+    <label>Cédula del paciente:
+      <input type="text" id="consultaCedulaResultados" required>
+    </label>
+    <button onclick="cargarResultados()">Consultar</button>
     <div id="listaResultados"></div>
-  </div>
-
-  <div id="verAlertas" class="seccion">
-    <h2>Alertas de Salud</h2>
-    <div id="listaAlertas"></div>
   </div>
 </body>
 </html>
